@@ -5,6 +5,8 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -12,31 +14,62 @@ import com.etiennelawlor.imagegallery.library.R;
 import com.etiennelawlor.imagegallery.library.util.ImageGalleryUtils;
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * Created by etiennelawlor on 8/20/15.
  */
-public class ImageGalleryAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public abstract class ImageGalleryAdapter<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     // region Member Variables
-    private final List<String> mImages;
+    protected List<T> mImages;
     private int mGridItemWidth;
     private int mGridItemHeight;
     private OnImageClickListener mOnImageClickListener;
+    private OnImageSelectionChangedListener mOnImageSelectionChangedListener;
     // endregion
 
     // region Interfaces
     public interface OnImageClickListener {
         void onImageClick(int position);
     }
+    public interface OnImageSelectionChangedListener {
+        void onImageSelectionChanged(int position, boolean checked);
+    }
     // endregion
 
     // region Constructors
-    public ImageGalleryAdapter(List<String> images) {
+    public ImageGalleryAdapter(List<T> images) {
         mImages = images;
     }
     // endregion
+
+    // region Abstract methods
+    protected abstract boolean isSelected(T item);
+
+    protected abstract void setSelected(T item, boolean selected);
+
+    protected abstract String imageUrlForItem(T item);
+
+    public abstract ArrayList<String> getImagesUrl();
+
+    // endregion
+
+    public void updateAndRefreshData(List<T> images) {
+        mImages = images;
+        notifyDataSetChanged();
+    }
+
+    public ArrayList<T> getSelectedImages() {
+        ArrayList<T> selectedImages = new ArrayList<>();
+        for (T item : mImages) {
+            if (isSelected(item))
+                selectedImages.add(item);
+        }
+        return selectedImages;
+    }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup viewGroup, int i) {
@@ -47,20 +80,37 @@ public class ImageGalleryAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
+    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, final int position) {
         final ImageViewHolder holder = (ImageViewHolder) viewHolder;
 
-        String image = mImages.get(position);
+        T item = mImages.get(position);
+        String image = imageUrlForItem(item);
+        boolean selected = isSelected(item);
 
         setUpImage(holder.mImageView, image);
+        holder.mCheckBox.setChecked(selected);
 
         holder.mFrameLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int adapterPos = holder.getAdapterPosition();
-                if(adapterPos != RecyclerView.NO_POSITION){
-                    if (mOnImageClickListener != null) {
+                if (mOnImageClickListener != null) {
+                    int adapterPos = holder.getAdapterPosition();
+                    if (adapterPos != RecyclerView.NO_POSITION) {
                         mOnImageClickListener.onImageClick(adapterPos);
+                    }
+                }
+            }
+        });
+
+        holder.mCheckBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                int adapterPos = holder.getAdapterPosition();
+                if (adapterPos != RecyclerView.NO_POSITION) {
+                    T item = mImages.get(adapterPos);
+                    setSelected(item, isChecked);
+                    if (mOnImageSelectionChangedListener != null) {
+                        mOnImageSelectionChangedListener.onImageSelectionChanged(adapterPos, isChecked);
                     }
                 }
             }
@@ -79,6 +129,10 @@ public class ImageGalleryAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
     // region Helper Methods
     public void setOnImageClickListener(OnImageClickListener listener) {
         this.mOnImageClickListener = listener;
+    }
+
+    public void setOnImageSelectionChangedListener(OnImageSelectionChangedListener listener) {
+        this.mOnImageSelectionChangedListener = listener;
     }
 
     private ViewGroup.LayoutParams getGridItemLayoutParams(View view) {
@@ -120,12 +174,14 @@ public class ImageGalleryAdapter extends RecyclerView.Adapter<RecyclerView.ViewH
         // region Member Variables
         private final ImageView mImageView;
         private final FrameLayout mFrameLayout;
+        private final CheckBox mCheckBox;
         // endregion
 
         // region Constructors
         public ImageViewHolder(final View view) {
             super(view);
 
+            mCheckBox = (CheckBox) view.findViewById(R.id.cb);
             mImageView = (ImageView) view.findViewById(R.id.iv);
             mFrameLayout = (FrameLayout) view.findViewById(R.id.fl);
         }

@@ -8,7 +8,7 @@
         android:theme="@style/AppTheme" >
 
         <activity
-            android:name="com.etiennelawlor.imagegallery.library.activities.ImageGalleryActivity"
+            android:name=".activities.GalleryActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label=""
             android:theme="@style/ImageGalleryTheme" />

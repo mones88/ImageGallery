@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     // region Listeners
     @OnClick(R.id.view_gallery_btn)
     public void onViewGalleryButtonClicked() {
-        Intent intent = new Intent(MainActivity.this, ImageGalleryActivity.class);
+        Intent intent = new Intent(MainActivity.this, GalleryActivity.class);
 
         ArrayList<String> images = new ArrayList<>();
 
@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         images.add("https://images.unsplash.com/44/MIbCzcvxQdahamZSNQ26_12082014-IMG_3526.jpg?q=80&fm=jpg&s=9f2b7926c5c13f719c57536392d78b49");
         images.add("https://images.unsplash.com/photo-1415226556993-1404e0c6e727?q=80&fm=jpg&s=334b8b5271cdbd8cbd4990a3aef89074");
 
-        intent.putStringArrayListExtra("images", images);
+        intent.putStringArrayListExtra(GalleryActivity.IMAGES_EXTRA, images);
         // optionally set background color using Palette
         intent.putExtra("palette_color_type", PaletteColorType.VIBRANT);
 
